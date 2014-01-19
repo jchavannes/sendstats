@@ -39,7 +39,9 @@ class Stream {
 
         try {
             $length = strlen($message);
-            $client = stream_socket_client("tcp://" . STREAM_ADDR_CLIENT . ":" . STEAM_PORT);
+            if (!$client = @stream_socket_client("tcp://" . STREAM_ADDR_CLIENT . ":" . STEAM_PORT)) {
+                throw new Exception("Error connecting to socket.");
+            }
             fwrite($client, $length, STREAM_LENGTH);
             fwrite($client, $message, STREAM_LENGTH);
             $response = fread($client, STREAM_LENGTH);
@@ -47,7 +49,7 @@ class Stream {
             return $response;
         }
         catch (Exception $e) {
-            return false;
+            return $e->getMessage();
         }
 
     }

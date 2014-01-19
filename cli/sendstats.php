@@ -17,7 +17,6 @@ foreach ($logFiles as $logFile) {
 }
 
 if (count($updatedLogFiles)) {
-    LineCount::save($updatedLogFiles);
     $payload = new Payload($updatedLogFiles);
 
     $message = serialize($payload);
@@ -25,6 +24,7 @@ if (count($updatedLogFiles)) {
 
     echo $response . "\n";
     if ($response == "success") {
+        LineCount::save($updatedLogFiles);
         Database::commit();
     }
     else {

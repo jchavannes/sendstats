@@ -21,7 +21,7 @@ while ($conn = stream_socket_accept($server, 600)) {
             throw new Exception("Expected payload.");
         }
         CollectStats::save($payload->logFiles);
-        echo "success (" . strlen($raw) . ")\n";
+        echo "success (" . strlen($raw) . ") - " . date("H:i:s") . "\n";
         fwrite($conn, "success");
         Database::commit();
     }
