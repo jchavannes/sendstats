@@ -38,11 +38,9 @@ class Stream {
     static public function send($message) {
 
         try {
-            $addr = gethostbyname(STREAM_ADDR);
-            $client = stream_socket_client("tcp://$addr:1337");
-
+            $client = stream_socket_client("tcp://" . STREAM_ADDR_CLIENT . ":" . STEAM_PORT);
             fwrite($client, $message . "\n");
-            $response = fread($client, 2048);
+            $response = fread($client, STREAM_LENGTH);
             fclose($client);
             return $response;
         }

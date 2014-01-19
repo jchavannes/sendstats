@@ -4,11 +4,12 @@ include('common.php');
 Database::loadDb();
 
 set_time_limit(0);
-$server = stream_socket_server("tcp://localhost:1337");
+$server = stream_socket_server("tcp://" . STREAM_ADDR_SERVER . ":" . STEAM_PORT);
 
 while ($conn = stream_socket_accept($server)) {
     try {
-        $payload = unserialize(fread($conn, 4096)); /** @var $payload Payload */
+        $raw = fread($conn, STREAM_LENGTH);
+        $payload = unserialize(trim($raw)); /** @var $payload Payload */
         if (!$payload instanceof Payload || !$payload->verifyToken()) {
             throw new Exception();
         }
