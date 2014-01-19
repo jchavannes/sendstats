@@ -18,15 +18,15 @@ while ($conn = stream_socket_accept($server, 600)) {
         }
         $payload = unserialize($raw); /** @var $payload Payload */
         if (!$payload instanceof Payload || !$payload->verifyToken()) {
-            throw new Exception("Expecting token: " . $payload->getToken() . ", got token: " . $payload->token);
+            throw new Exception("Expected payload.");
         }
         CollectStats::save($payload->logFiles);
-        echo "return success (" . strlen($raw) . ")\n";
+        echo "success (" . strlen($raw) . ")\n";
         fwrite($conn, "success");
         Database::commit();
     }
     catch (Exception $e) {
-        echo "return failed (" . strlen($raw) . ")\n";
+        echo "failed (" . strlen($raw) . ")\n";
         fwrite($conn, "failed: " . $e->getMessage(), STREAM_LENGTH);
         Database::rollback();
     }
@@ -55,7 +55,7 @@ class CollectStats {
             $logMessage = sprintf(
                 "%-6s %-45s %-7d %-7d %-12s\n",
                 $changeText,
-                $logFile->projectName,
+                $logFile->hostName . "." . $logFile->projectName,
                 $logFile->currentLineCount,
                 $logFile->previousLineCount,
                 $logFile->currentFirstEntry > 0 ? date("Y-m-d H:i:s", $logFile->currentFirstEntry) : "None"
@@ -64,13 +64,15 @@ class CollectStats {
         }
     }
 
-    static public function sendToGraphite($project, $time, $count) {
+    static public function sendToGraphite($project, $hostName, $time, $count) {
         if (self::$carbonSocket == null) {
             if (!self::$carbonSocket = fsockopen("localhost", 2003)) {
                 throw new Exception("Unable to connect to carbon socket.");
             }
         }
-        $message = "stats.apache.requests.$project $count $time\n";
+        $hostName = str_replace(".", "_", $hostName);
+        $project  = str_replace(".", "_", $project);
+        $message = "stats.$hostName.requests.$project $count $time\n";
         fwrite(self::$carbonSocket, $message, strlen($message));
     }
 
@@ -139,7 +141,7 @@ class CollectStats {
             }
 
             // Send data to graphite
-            self::sendToGraphite($logFile->projectName, $time, $count);
+            self::sendToGraphite($logFile->projectName, $logFile->hostName, $time, $count);
         }
     }
 

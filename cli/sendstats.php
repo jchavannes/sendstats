@@ -3,23 +3,36 @@ include('common.php');
 
 Database::loadDb();
 
-$logFiles = array();
+$logFiles = array(); /** @var $logFiles LogFile[] */
 $directory = "/var/log/apache2/";
 foreach (preg_grep('/access[A-Za-z-]*.log$/', scandir($directory)) as $filename) {
     $logFiles[] = new LogFile($filename, $directory);
 }
 
-LineCount::save($logFiles);
+$updatedLogFiles = array();
+foreach ($logFiles as $logFile) {
+    if ($logFile->fileChanged) {
+        $updatedLogFiles[] = $logFile;
+    }
+}
 
-$payload = new Payload($logFiles);
-$message = serialize($payload);
-echo "size: (" . strlen($message) . ")\n";
-$response = Stream::send($message);
-if ($response == "success") {
-    Database::commit();
+if (count($updatedLogFiles)) {
+    LineCount::save($updatedLogFiles);
+    $payload = new Payload($updatedLogFiles);
+
+    $message = serialize($payload);
+    $response = Stream::send($message);
+
+    echo $response . "\n";
+    if ($response == "success") {
+        Database::commit();
+    }
+    else {
+        Database::rollback();
+    }
 }
 else {
-    echo $response . "\n";
+    echo "No updates.\n";
 }
 
 class LineCount {
