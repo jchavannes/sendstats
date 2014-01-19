@@ -39,7 +39,7 @@ class Stream {
 
         try {
             $client = stream_socket_client("tcp://" . STREAM_ADDR_CLIENT . ":" . STEAM_PORT);
-            fwrite($client, $message . "\n");
+            fwrite($client, $message . "\n", STREAM_LENGTH);
             $response = fread($client, STREAM_LENGTH);
             fclose($client);
             return $response;

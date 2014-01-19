@@ -6,7 +6,7 @@ Database::loadDb();
 set_time_limit(0);
 $server = stream_socket_server("tcp://" . STREAM_ADDR_SERVER . ":" . STEAM_PORT);
 
-while ($conn = stream_socket_accept($server)) {
+while ($conn = stream_socket_accept($server, 600)) {
     try {
         $raw = fread($conn, STREAM_LENGTH);
         $payload = unserialize(trim($raw)); /** @var $payload Payload */
@@ -14,11 +14,13 @@ while ($conn = stream_socket_accept($server)) {
             throw new Exception();
         }
         CollectStats::save($payload->logFiles);
+        echo "return success\n";
         fwrite($conn, "success");
         Database::commit();
     }
     catch (Exception $e) {
-        fwrite($conn, "failed: " . $e->getMessage());
+        echo "return failed\n";
+        fwrite($conn, "failed: " . $e->getMessage(), STREAM_LENGTH);
         Database::rollback();
     }
     fclose($conn);
