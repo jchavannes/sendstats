@@ -3,36 +3,39 @@ include('common.php');
 
 Database::loadDb();
 
-$logFiles = array(); /** @var $logFiles LogFile[] */
-$directory = "/var/log/apache2/";
-foreach (preg_grep('/access[A-Za-z-]*.log$/', scandir($directory)) as $filename) {
-    $logFiles[] = new LogFile($filename, $directory);
-}
-
-$updatedLogFiles = array();
-foreach ($logFiles as $logFile) {
-    if ($logFile->fileChanged) {
-        $updatedLogFiles[] = $logFile;
+while (true) {
+    $logFiles = array(); /** @var $logFiles LogFile[] */
+    $directory = "/var/log/apache2/";
+    foreach (preg_grep('/access[A-Za-z-]*.log$/', scandir($directory)) as $filename) {
+        $logFiles[] = new LogFile($filename, $directory);
     }
-}
 
-if (count($updatedLogFiles)) {
-    $payload = new Payload($updatedLogFiles);
+    $updatedLogFiles = array();
+    foreach ($logFiles as $logFile) {
+        if ($logFile->fileChanged) {
+            $updatedLogFiles[] = $logFile;
+        }
+    }
 
-    $message = serialize($payload);
-    $response = Stream::send($message);
+    if (count($updatedLogFiles)) {
+        $payload = new Payload($updatedLogFiles);
 
-    echo $response . "\n";
-    if ($response == "success") {
-        LineCount::save($updatedLogFiles);
-        Database::commit();
+        $message = serialize($payload);
+        $response = Stream::send($message);
+
+        echo $response . "\n";
+        if ($response == "success") {
+            LineCount::save($updatedLogFiles);
+            Database::commit();
+        }
+        else {
+            Database::rollback();
+        }
     }
     else {
-        Database::rollback();
+        echo "No updates.\n";
     }
-}
-else {
-    echo "No updates.\n";
+    sleep(2);
 }
 
 class LineCount {
