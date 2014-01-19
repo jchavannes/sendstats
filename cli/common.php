@@ -70,6 +70,7 @@ class Payload {
     }
 
     static public function getToken() {
+        return round(time() / 60, 60);
         return md5(round(time() / 60, 60) . TOKEN_CODE);
     }
 

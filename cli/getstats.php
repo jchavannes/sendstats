@@ -18,7 +18,7 @@ while ($conn = stream_socket_accept($server, 600)) {
         }
         $payload = unserialize($raw); /** @var $payload Payload */
         if (!$payload instanceof Payload || !$payload->verifyToken()) {
-            throw new Exception();
+            throw new Exception("Expecting token: " . $payload->getToken() . ", got token: " . $payload->token);
         }
         CollectStats::save($payload->logFiles);
         echo "return success (" . strlen($raw) . ")\n";
