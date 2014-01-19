@@ -62,7 +62,7 @@ class Payload {
     public $hostname;
 
     public function __construct($logFiles) {
-        $this->token = md5(round(time() / 60, 60) . TOKEN_CODE);
+        $this->token = self::getToken();
         $this->hostname = HOST_NAME;
         $this->logFiles = $logFiles;
     }
@@ -72,7 +72,7 @@ class Payload {
     }
 
     public function verifyToken() {
-        return $this->token == md5(round(time() / 60, 60) . TOKEN_CODE);
+        return $this->token == self::getToken();
     }
 
 }

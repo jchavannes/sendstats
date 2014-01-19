@@ -8,18 +8,18 @@ $server = stream_socket_server("tcp://" . STREAM_ADDR_SERVER . ":" . STEAM_PORT)
 
 while ($conn = stream_socket_accept($server, 600)) {
     try {
-        $raw = fread($conn, STREAM_LENGTH);
-        $payload = unserialize(trim($raw)); /** @var $payload Payload */
+        $raw = trim(fread($conn, STREAM_LENGTH));
+        $payload = unserialize($raw); /** @var $payload Payload */
         if (!$payload instanceof Payload || !$payload->verifyToken()) {
             throw new Exception();
         }
         CollectStats::save($payload->logFiles);
-        echo "return success\n";
+        echo "return success (" . strlen($raw) . ")\n";
         fwrite($conn, "success");
         Database::commit();
     }
     catch (Exception $e) {
-        echo "return failed\n";
+        echo "return failed (" . strlen($raw) . ")\n";
         fwrite($conn, "failed: " . $e->getMessage(), STREAM_LENGTH);
         Database::rollback();
     }

@@ -12,7 +12,9 @@ foreach (preg_grep('/access[A-Za-z-]*.log$/', scandir($directory)) as $filename)
 LineCount::save($logFiles);
 
 $payload = new Payload($logFiles);
-$response = Stream::send(serialize($payload));
+$message = serialize($payload);
+echo "size: (" . strlen($message) . ")\n";
+$response = Stream::send($message);
 if ($response == "success") {
     Database::commit();
 }
