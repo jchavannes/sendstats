@@ -38,8 +38,10 @@ class Stream {
     static public function send($message) {
 
         try {
+            $length = strlen($message);
             $client = stream_socket_client("tcp://" . STREAM_ADDR_CLIENT . ":" . STEAM_PORT);
-            fwrite($client, $message . "\n", STREAM_LENGTH);
+            fwrite($client, $length, STREAM_LENGTH);
+            fwrite($client, $message, STREAM_LENGTH);
             $response = fread($client, STREAM_LENGTH);
             fclose($client);
             return $response;

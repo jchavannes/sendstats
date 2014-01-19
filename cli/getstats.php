@@ -8,7 +8,14 @@ $server = stream_socket_server("tcp://" . STREAM_ADDR_SERVER . ":" . STEAM_PORT)
 
 while ($conn = stream_socket_accept($server, 600)) {
     try {
-        $raw = trim(fread($conn, STREAM_LENGTH));
+        $length = fread($conn, STREAM_LENGTH);
+        $raw = "";
+        while ($partial = trim(fread($conn, STREAM_LENGTH))) {
+            $raw .= $partial;
+            if (strlen($raw) >= $length) {
+                break;
+            }
+        }
         $payload = unserialize($raw); /** @var $payload Payload */
         if (!$payload instanceof Payload || !$payload->verifyToken()) {
             throw new Exception();
