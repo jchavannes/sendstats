@@ -35,7 +35,7 @@ while (true) {
     else {
         echo "No updates.\n";
     }
-    sleep(2);
+    sleep(1);
 }
 
 class LineCount {

@@ -17,20 +17,24 @@ while ($conn = stream_socket_accept($server, 600)) {
             }
         }
         $payload = unserialize($raw); /** @var $payload Payload */
-        if (!$payload instanceof Payload || !$payload->verifyToken()) {
+        if (!$payload instanceof Payload) {
             throw new Exception("Expected payload.");
+        }
+        if (!$payload->verifyToken()) {
+            throw new Exception("Unable to verify token. Check time synchronization.");
         }
         CollectStats::save($payload->logFiles);
         echo "success (" . strlen($raw) . ") - " . date("H:i:s") . "\n";
         fwrite($conn, "success");
         Database::commit();
+        fclose($conn);
     }
     catch (Exception $e) {
         echo "failed (" . strlen($raw) . ")\n";
         fwrite($conn, "failed: " . $e->getMessage(), STREAM_LENGTH);
         Database::rollback();
+        fclose($conn);
     }
-    fclose($conn);
 }
 
 fclose($server);
@@ -73,7 +77,9 @@ class CollectStats {
         $hostName = str_replace(".", "_", $hostName);
         $project  = str_replace(".", "_", $project);
         $message = "stats.$hostName.requests.$project $count $time\n";
-        fwrite(self::$carbonSocket, $message, strlen($message));
+        if (!fwrite(self::$carbonSocket, $message, strlen($message))) {
+            throw new Exception("Unable to write data to carbon socket.");
+        }
     }
 
     static public function updateDatabase(LogFile $logFile) {
